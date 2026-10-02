@@ -1,0 +1,32 @@
+{
+  "name": "changologs-cli",
+  "version": "0.1.0",
+  "description": "Command-line client for Changologs",
+  "type": "module",
+  "bin": {
+    "changologs": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsc"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "turndown": "^7.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/turndown": "^5.0.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24.5"
+  },
+  "author": "Jorge Chavez",
+  "license": "MIT"
+}
