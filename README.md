@@ -141,13 +141,9 @@ node dist/index.js help
 
 ### Releasing
 
-The install script downloads `changologs.js` from the latest GitHub Release. To publish one, bump `version` in `package.json`, then push a matching tag:
+The install script downloads `changologs.js` from the latest GitHub Release. To publish one, bump `version` in `package.json` and push to `main`.
 
-```sh
-git tag v0.1.1 && git push origin v0.1.1
-```
-
-The `Release` workflow (`.github/workflows/release.yml`) bundles the CLI with esbuild (`npm run bundle`) and attaches `dist/changologs.js` to a new release. To test the bundle locally, run `npm run bundle && node dist/changologs.js help`.
+On every push to `main`, the `Release` workflow (`.github/workflows/release.yml`) checks whether `v<version>` is already released. If it isn't, the workflow bundles the CLI with esbuild (`npm run bundle`), creates the `v<version>` tag, and attaches `dist/changologs.js` to a new release. Pushes that don't change the version do nothing. To test the bundle locally, run `npm run bundle && node dist/changologs.js help`.
 
 ## License
 

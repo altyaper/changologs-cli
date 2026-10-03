@@ -1,25 +1,49 @@
 name: Release
 
+# On every push to main, publish a release for package.json's version if one
+# doesn't exist yet. Bump "version" to cut a release; gh creates the v<version> tag.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check for an existing release
+        id: version
+        run: |
+          tag="v$(node -p 'require("./package.json").version')"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "$tag is already released; nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.exists != 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: npm run typecheck
-      - run: npm run bundle
-      - run: node dist/changologs.js help
-      - run: gh release create "$GITHUB_REF_NAME" dist/changologs.js --title "$GITHUB_REF_NAME" --generate-notes
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - if: steps.version.outputs.exists != 'true'
+        run: npm ci --no-audit --no-fund
+      - if: steps.version.outputs.exists != 'true'
+        run: npm run typecheck
+      - if: steps.version.outputs.exists != 'true'
+        run: npm run bundle
+      - if: steps.version.outputs.exists != 'true'
+        run: node dist/changologs.js help
+      - if: steps.version.outputs.exists != 'true'
+        run: >
+          gh release create "${{ steps.version.outputs.tag }}" dist/changologs.js
+          --target "$GITHUB_SHA" --title "${{ steps.version.outputs.tag }}" --generate-notes
