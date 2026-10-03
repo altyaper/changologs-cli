@@ -9,7 +9,9 @@ import { OAuthError } from "./oauth.js";
 const HELP = `Usage: changologs <command>
 
 Commands:
-  login [--new-client]  Authorize this machine in the browser (--new-client re-registers)
+  login [--new-client] [--no-browser]
+                        Authorize this machine in the browser (--new-client re-registers;
+                        --no-browser prints a URL to open elsewhere, automatic over SSH)
   logs                  Pick a workspace, list its 10 most recent logs, open one to read it
   search [query]        Search a workspace's logs and open one to read it
   help                  Show this message
@@ -21,7 +23,7 @@ Environment:
 async function main([command, ...args]: string[]): Promise<void> {
   switch (command) {
     case "login":
-      return login({ newClient: args.includes("--new-client") });
+      return login({ newClient: args.includes("--new-client"), noBrowser: args.includes("--no-browser") });
     case "logs": {
       const session = await loadSession();
       if (!session) throw new ApiError("Not logged in. Run `changologs login` first.");

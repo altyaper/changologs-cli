@@ -56,6 +56,16 @@ This opens your browser so you can authorize the CLI. When you approve, the brow
 
 If the browser doesn't open by itself, copy the URL the CLI prints into your browser.
 
+#### Over SSH (e.g. a Raspberry Pi)
+
+When the CLI runs over SSH, or on Linux with no display, it doesn't try to open a browser (force this anywhere with `changologs login --no-browser`). Instead:
+
+1. Open the URL the CLI prints in a browser on your laptop and approve.
+2. The browser then goes to a `http://127.0.0.1:<port>/callback?code=…` page that fails to load. That's expected: the CLI's callback server is on the Pi, not your laptop.
+3. Copy that page's full URL from the address bar and paste it at the CLI's `Redirect URL:` prompt.
+
+If you forward the port instead (`ssh -L <port>:127.0.0.1:<port> pi`), the redirect reaches the CLI by itself and the prompt goes away.
+
 If the browser says the client is unknown, the saved OAuth registration is no longer valid. Register a new one:
 
 ```sh

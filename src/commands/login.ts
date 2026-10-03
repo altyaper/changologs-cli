@@ -2,7 +2,7 @@ import { getWorkspaces } from "../api.js";
 import { readConfig, resolveBaseUrl, writeConfig } from "../config.js";
 import { authorizeInBrowser, registerClient } from "../oauth.js";
 
-export async function login(options: { newClient: boolean }): Promise<void> {
+export async function login(options: { newClient: boolean; noBrowser: boolean }): Promise<void> {
   const stored = await readConfig();
   const baseUrl = resolveBaseUrl(stored);
 
@@ -13,7 +13,7 @@ export async function login(options: { newClient: boolean }): Promise<void> {
     console.log("If the browser reports an unknown client, re-run with `changologs login --new-client`.\n");
   }
 
-  const tokens = await authorizeInBrowser(baseUrl, clientId);
+  const tokens = await authorizeInBrowser(baseUrl, clientId, { noBrowser: options.noBrowser });
   const workspaces = await getWorkspaces({ baseUrl, auth: { kind: "oauth", clientId, tokens } });
   const path = await writeConfig({ baseUrl, oauthClientId: clientId, tokens });
   console.log(`Logged in to ${baseUrl}. ${workspaces.length} workspace(s) available. Saved to ${path}`);
