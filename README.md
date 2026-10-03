@@ -38,6 +38,10 @@ npm install      # also builds via the prepare script
 npm link         # puts `changologs` on your PATH
 ```
 
+### Updates
+
+Once a day, the CLI checks GitHub for a newer release. If it finds one, it prints the update command after your command finishes. The check runs alongside the command, gives up after 3 seconds, and caches its result in `~/.config/changologs/update-check.json`. It is skipped when output isn't a terminal, when `CI` is set, or when an API key is in use. Set `CHANGOLOGS_NO_UPDATE_CHECK=1` to turn it off. `changologs --version` prints the installed version.
+
 ### Uninstall
 
 ```sh
@@ -151,7 +155,7 @@ node dist/index.js help
 
 ### Releasing
 
-The install script downloads `changologs.js` from the latest GitHub Release. To publish one, bump `version` in `package.json` and push to `main`.
+The install script downloads `changologs.js` from the latest GitHub Release. To publish one, bump `version` in `package.json` and push to `main`. Installed CLIs start showing the update notice within a day.
 
 On every push to `main`, the `Release` workflow (`.github/workflows/release.yml`) checks whether `v<version>` is already released. If it isn't, the workflow bundles the CLI with esbuild (`npm run bundle`), creates the `v<version>` tag, and attaches `dist/changologs.js` to a new release. Pushes that don't change the version do nothing. To test the bundle locally, run `npm run bundle && node dist/changologs.js help`.
 

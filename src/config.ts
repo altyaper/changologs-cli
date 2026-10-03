@@ -28,11 +28,9 @@ export interface Session {
 
 export const DEFAULT_BASE_URL = "https://changologs.com";
 
-const CONFIG_PATH = join(
-  process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"),
-  "changologs",
-  "config.json",
-);
+export const CONFIG_DIR = join(process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"), "changologs");
+
+const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
 export async function readConfig(): Promise<StoredConfig> {
   try {
