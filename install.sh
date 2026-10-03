@@ -49,10 +49,30 @@ chmod +x "$DIR/changologs.js"
 ln -sf "$DIR/changologs.js" "$BIN_DIR/changologs"
 say "Installed changologs -> $BIN_DIR/changologs"
 
+case "${SHELL##*/}" in
+  zsh) PROFILE="$HOME/.zshrc" ;;
+  bash) PROFILE="$HOME/.bashrc" ;;
+  *) PROFILE="$HOME/.profile" ;;
+esac
+
+# Debian's stock ~/.profile adds ~/.local/bin only if it existed at login, so
+# right after we create it the current shell lacks it but the next one won't.
+in_profile() {
+  rel="${BIN_DIR#"$HOME"/}"
+  for f in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "$HOME/.zprofile" "$HOME/.zshrc"; do
+    [ -f "$f" ] && grep -qF "$rel" "$f" && return 0
+  done
+  return 1
+}
+
 case ":$PATH:" in
-  *":$BIN_DIR:"*) ;;
+  *":$BIN_DIR:"* | *":$BIN_DIR/:"*) ;;
   *)
-    printf '\n%s is not on your PATH. Add this to your shell profile (~/.zshrc):\n\n  export PATH="%s:$PATH"\n' "$BIN_DIR" "$BIN_DIR"
+    if in_profile; then
+      printf '\nOpen a new shell (or log in again) to put %s on your PATH.\n' "$BIN_DIR"
+    else
+      printf '\n%s is not on your PATH. Add this to %s:\n\n  export PATH="%s:$PATH"\n' "$BIN_DIR" "$PROFILE" "$BIN_DIR"
+    fi
     ;;
 esac
 
