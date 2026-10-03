@@ -40,6 +40,16 @@ if [ -d "$DIR/.git" ]; then
   rm -rf "$DIR"
 fi
 
+# Ask the installed file itself, which also proves it runs. Releases before
+# v0.2.0 have no --version (they print help and exit 1), so print nothing.
+installed_version() {
+  v=$(CHANGOLOGS_NO_UPDATE_CHECK=1 node "$DIR/changologs.js" --version 2>/dev/null) || return 0
+  case "$v" in [0-9]*.*) printf '%s' "$v" ;; esac
+}
+
+PREVIOUS=""
+[ -f "$DIR/changologs.js" ] && PREVIOUS=$(installed_version)
+
 mkdir -p "$DIR" "$BIN_DIR"
 say "Downloading changologs ($VERSION)"
 curl -fsSL "$URL" -o "$DIR/changologs.js.tmp" || die "Download failed: $URL"
@@ -81,3 +91,17 @@ CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/changologs/config.json"
 if ! grep -q '"tokens"' "$CONFIG" 2>/dev/null; then
   printf '\nNext: run \033[1mchangologs login\033[0m\n'
 fi
+
+INSTALLED=$(installed_version)
+if [ -z "$INSTALLED" ]; then
+  [ "$VERSION" = latest ] && INSTALLED="" || INSTALLED="${VERSION#v}"
+fi
+if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$INSTALLED" ]; then
+  FROM=" (updated from $PREVIOUS)"
+elif [ -n "$PREVIOUS" ]; then
+  FROM=" (already up to date)"
+else
+  FROM=""
+fi
+printf '\n'
+say "changologs${INSTALLED:+ $INSTALLED} is installed$FROM"
