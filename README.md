@@ -56,7 +56,7 @@ rm -rf ~/.changologs-cli ~/.local/bin/changologs ~/.config/changologs
 changologs login
 ```
 
-This opens your browser so you can authorize the CLI. When you approve, the browser redirects back to a temporary server on `127.0.0.1`, and the CLI saves your tokens to `~/.config/changologs/config.json` (or `$XDG_CONFIG_HOME/changologs/config.json`). The file is created with `0600` permissions. Access tokens refresh automatically. If the refresh fails, the CLI asks you to run `changologs login` again.
+This opens your browser so you can authorize the CLI. When you approve, the browser redirects back to a temporary server on `127.0.0.1`, and the CLI saves your tokens to `~/.config/changologs/config.json` (or `$XDG_CONFIG_HOME/changologs/config.json`). The file is created with `0600` permissions. Access tokens refresh automatically. If the refresh fails, the CLI asks you to run `changologs login` again. If you are already logged in, `changologs login` says so and stops. Use `--force` to log in again anyway.
 
 If the browser doesn't open by itself, copy the URL the CLI prints into your browser.
 
@@ -105,9 +105,13 @@ export CHANGOLOGS_BASE_URL=http://localhost:3000   # default: https://changologs
 changologs <command>
 
 Commands:
-  login [--new-client]  Authorize this machine in the browser (--new-client re-registers)
+  login [--force] [--new-client] [--no-browser]
+                        Authorize this machine in the browser; skipped if already logged in
+                        (--force logs in again; --new-client re-registers; --no-browser
+                        prints a URL to open elsewhere, automatic over SSH)
   logs                  Pick a workspace, list its 10 most recent logs, open one to read it
   search [query]        Search a workspace's logs and open one to read it
+  version               Print the installed version
   help                  Show this message
 ```
 

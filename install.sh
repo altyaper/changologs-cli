@@ -76,4 +76,8 @@ case ":$PATH:" in
     ;;
 esac
 
-printf '\nNext: run \033[1mchangologs login\033[0m\n'
+# A reinstall keeps the saved login; only point new users at `login`.
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/changologs/config.json"
+if ! grep -q '"tokens"' "$CONFIG" 2>/dev/null; then
+  printf '\nNext: run \033[1mchangologs login\033[0m\n'
+fi
