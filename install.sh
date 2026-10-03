@@ -76,8 +76,4 @@ case ":$PATH:" in
     ;;
 esac
 
-if [ -z "${HTTPS_PROXY:-}${https_proxy:-}" ]; then
-  printf '\nBehind a corporate proxy? Node needs HTTPS_PROXY set to reach changologs.com.\n'
-fi
-
 printf '\nNext: run \033[1mchangologs login\033[0m\n'
