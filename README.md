@@ -111,6 +111,7 @@ Commands:
                         prints a URL to open elsewhere, automatic over SSH)
   logs                  Pick a workspace, list its 10 most recent logs, open one to read it
   search [query]        Search a workspace's logs and open one to read it
+  tasks                 Show a workspace's open tasks and tick the ones you've done
   version               Print the installed version
   help                  Show this message
 ```
@@ -131,6 +132,12 @@ Searches a workspace's logs. Pass the query as arguments, or leave them off and 
 changologs search release notes
 changologs search            # asks for the query
 ```
+
+### `changologs tasks`
+
+Shows a workspace's open tasks, one task list at a time, in the order the web app uses for that list. Each task shows its date and time, its deadline, and whether it repeats; the highlighted task's details appear below the list. Tick tasks with space and press enter to mark them done. Completing a repeating task moves it to its next date, and the CLI prints that date. Press enter without ticking anything to just look.
+
+When output is piped, the CLI prints every list as a `- [ ]` checklist instead.
 
 ### Workspaces
 

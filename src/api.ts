@@ -17,6 +17,30 @@ export interface Log {
   updated_at: string;
 }
 
+export interface TaskList {
+  id: number;
+  name: string;
+  /** How the web app orders the list's tasks. */
+  sort_by: "date" | "my_order" | "deadline" | "title";
+}
+
+export interface Task {
+  id: number;
+  task_list_id: number;
+  title: string;
+  details: string | null;
+  /** YYYY-MM-DD. */
+  date: string | null;
+  /** HH:MM. */
+  time: string | null;
+  /** YYYY-MM-DD. */
+  deadline: string | null;
+  completed_at: string | null;
+  position: number;
+  /** Set on repeating tasks; completing one moves `date` to the next occurrence. */
+  repeat_unit: number | null;
+}
+
 export class ApiError extends Error {
   constructor(message: string, readonly status?: number) {
     super(message);
@@ -46,9 +70,10 @@ function authHeaders(session: Session): Record<string, string> {
     : { Authorization: `Bearer ${auth.tokens.accessToken}` };
 }
 
-async function send(session: Session, path: string): Promise<Response> {
+async function send(session: Session, path: string, method: string): Promise<Response> {
   try {
     return await fetch(`${session.baseUrl}${path}`, {
+      method,
       headers: { Accept: "application/json", ...authHeaders(session) },
     });
   } catch (err) {
@@ -56,16 +81,16 @@ async function send(session: Session, path: string): Promise<Response> {
   }
 }
 
-async function request<T>(session: Session, path: string): Promise<T> {
+async function request<T>(session: Session, path: string, method = "GET"): Promise<T> {
   const { auth } = session;
   if (auth.kind === "oauth" && auth.tokens.expiresAt - EXPIRY_SKEW_MS < Date.now()) {
     await refresh(session);
   }
-  let res = await send(session, path);
+  let res = await send(session, path, method);
   // The token can be revoked server-side before it expires; one refresh decides.
   if (res.status === 401 && auth.kind === "oauth") {
     await refresh(session);
-    res = await send(session, path);
+    res = await send(session, path, method);
   }
   if (res.status === 401) {
     throw new ApiError("Unauthorized. Run `changologs login`, or check your API key.", 401);
@@ -91,4 +116,20 @@ export async function searchLogs(session: Session, workspaceHashId: string, quer
   const params = new URLSearchParams({ workspace_id: workspaceHashId, query });
   const data = await request<{ logs: Log[] }>(session, `/logs/search?${params}`);
   return data.logs;
+}
+
+export async function getTaskLists(session: Session, workspaceHashId: string): Promise<TaskList[]> {
+  const params = new URLSearchParams({ workspace_id: workspaceHashId });
+  const data = await request<{ task_lists: TaskList[] }>(session, `/api/task-lists?${params}`);
+  return data.task_lists;
+}
+
+export async function getTasks(session: Session, taskListId: number): Promise<Task[]> {
+  const data = await request<{ tasks: Task[] }>(session, `/api/task-lists/${taskListId}/tasks`);
+  return data.tasks;
+}
+
+/** Returns the updated task: completed, or for a repeating task, moved to its next date. */
+export async function completeTask(session: Session, task: Task): Promise<Task> {
+  return request<Task>(session, `/api/task-lists/${task.task_list_id}/tasks/${task.id}/complete`, "POST");
 }

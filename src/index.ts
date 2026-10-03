@@ -3,6 +3,7 @@ import { ApiError } from "./api.js";
 import { login } from "./commands/login.js";
 import { logs } from "./commands/logs.js";
 import { search } from "./commands/search.js";
+import { tasks } from "./commands/tasks.js";
 import { loadSession } from "./config.js";
 import { OAuthError } from "./oauth.js";
 import { checkForUpdate, VERSION } from "./update-check.js";
@@ -16,6 +17,7 @@ Commands:
                         prints a URL to open elsewhere, automatic over SSH)
   logs                  Pick a workspace, list its 10 most recent logs, open one to read it
   search [query]        Search a workspace's logs and open one to read it
+  tasks                 Show a workspace's open tasks and tick the ones you've done
   version               Print the installed version
   help                  Show this message
 
@@ -42,6 +44,11 @@ async function main([command, ...args]: string[]): Promise<void> {
       if (!session) throw new ApiError("Not logged in. Run `changologs login` first.");
       return search(session, args);
     }
+    case "tasks": {
+      const session = await loadSession();
+      if (!session) throw new ApiError("Not logged in. Run `changologs login` first.");
+      return tasks(session);
+    }
     case "version":
     case "--version":
     case "-v":
@@ -64,15 +71,17 @@ async function main([command, ...args]: string[]): Promise<void> {
 // notice prints after the command's own output.
 const update = checkForUpdate();
 
-await main(process.argv.slice(2)).catch((err: unknown) => {
-  // Ctrl+C inside a prompt rejects with ExitPromptError; exit quietly.
-  if (err instanceof Error && err.name === "ExitPromptError") {
-    process.exitCode = 130;
-    return;
-  }
-  console.error(err instanceof ApiError || err instanceof OAuthError ? err.message : err);
-  process.exitCode = 1;
-});
-
-const notice = await update;
-if (notice) console.error(notice);
+main(process.argv.slice(2))
+  .catch((err: unknown) => {
+    // Ctrl+C inside a prompt rejects with ExitPromptError; exit quietly.
+    if (err instanceof Error && err.name === "ExitPromptError") {
+      process.exitCode = 130;
+      return;
+    }
+    console.error(err instanceof ApiError || err instanceof OAuthError ? err.message : err);
+    process.exitCode = 1;
+  })
+  .then(() => update)
+  .then((notice) => {
+    if (notice) console.error(notice);
+  });
