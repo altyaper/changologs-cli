@@ -5,7 +5,7 @@ Command-line client for [Changologs](https://changologs.com). You can browse and
 ## Requirements
 
 - Node.js **24.5 or newer**. The CLI's shebang uses `node --use-env-proxy`, and older versions don't have that flag.
-- `git` and `npm`
+- `curl` (`git` and `npm` only if you build from source)
 
 ## Install
 
@@ -13,7 +13,7 @@ Command-line client for [Changologs](https://changologs.com). You can browse and
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/altyaper/changologs-cli/main/install.sh)"
 ```
 
-The script clones the repo into `~/.changologs-cli`, installs dependencies, builds the CLI, and symlinks `changologs` into `~/.local/bin`. Run the same command again to update.
+The script downloads the prebuilt CLI (one bundled JavaScript file) from the latest [GitHub Release](https://github.com/altyaper/changologs-cli/releases) into `~/.changologs-cli` and symlinks `changologs` into `~/.local/bin`. Nothing is compiled on your machine. Run the same command again to update.
 
 If `~/.local/bin` isn't on your `PATH`, add it to your shell profile (`~/.zshrc`, `~/.bashrc`):
 
@@ -23,12 +23,11 @@ export PATH="$HOME/.local/bin:$PATH"
 
 To change where things go, set these variables before you run the script:
 
-| Variable             | Default                                          | Purpose                          |
-| -------------------- | ------------------------------------------------ | -------------------------------- |
-| `CHANGOLOGS_DIR`     | `~/.changologs-cli`                              | Where the repo is checked out    |
-| `CHANGOLOGS_BIN_DIR` | `~/.local/bin`                                   | Where the `changologs` link goes |
-| `CHANGOLOGS_REPO`    | `https://github.com/altyaper/changologs-cli.git` | Repo to clone                    |
-| `CHANGOLOGS_BRANCH`  | `main`                                           | Branch to install                |
+| Variable             | Default             | Purpose                                 |
+| -------------------- | ------------------- | --------------------------------------- |
+| `CHANGOLOGS_DIR`     | `~/.changologs-cli` | Where the CLI file is downloaded        |
+| `CHANGOLOGS_BIN_DIR` | `~/.local/bin`      | Where the `changologs` link goes        |
+| `CHANGOLOGS_VERSION` | `latest`            | Release tag to install, e.g. `v0.1.0`   |
 
 ### From source
 
@@ -139,6 +138,16 @@ npm run dev        # tsc --watch
 npm run typecheck
 node dist/index.js help
 ```
+
+### Releasing
+
+The install script downloads `changologs.js` from the latest GitHub Release. To publish one, bump `version` in `package.json`, then push a matching tag:
+
+```sh
+git tag v0.1.1 && git push origin v0.1.1
+```
+
+The `Release` workflow (`.github/workflows/release.yml`) bundles the CLI with esbuild (`npm run bundle`) and attaches `dist/changologs.js` to a new release. To test the bundle locally, run `npm run bundle && node dist/changologs.js help`.
 
 ## License
 

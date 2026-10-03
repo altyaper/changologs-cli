@@ -2,13 +2,14 @@
 # Install or update the changologs CLI:
 #   sh -c "$(curl -fsSL https://raw.githubusercontent.com/altyaper/changologs-cli/main/install.sh)"
 #
-# Overrides: CHANGOLOGS_DIR (checkout, default ~/.changologs-cli),
+# Downloads the prebuilt single-file bundle from the latest GitHub Release.
+# Overrides: CHANGOLOGS_DIR (install dir, default ~/.changologs-cli),
 #            CHANGOLOGS_BIN_DIR (symlink target, default ~/.local/bin),
-#            CHANGOLOGS_REPO, CHANGOLOGS_BRANCH.
+#            CHANGOLOGS_VERSION (release tag, e.g. v0.1.0; default latest).
 set -eu
 
-REPO="${CHANGOLOGS_REPO:-https://github.com/altyaper/changologs-cli.git}"
-BRANCH="${CHANGOLOGS_BRANCH:-main}"
+GH_REPO="altyaper/changologs-cli"
+VERSION="${CHANGOLOGS_VERSION:-latest}"
 DIR="${CHANGOLOGS_DIR:-$HOME/.changologs-cli}"
 BIN_DIR="${CHANGOLOGS_BIN_DIR:-$HOME/.local/bin}"
 MIN_NODE="24.5.0"
@@ -16,9 +17,8 @@ MIN_NODE="24.5.0"
 say() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 
-command -v git >/dev/null 2>&1 || die "git is required."
+command -v curl >/dev/null 2>&1 || die "curl is required."
 command -v node >/dev/null 2>&1 || die "Node.js >= $MIN_NODE is required (https://nodejs.org)."
-command -v npm >/dev/null 2>&1 || die "npm is required."
 
 # The CLI's shebang uses --use-env-proxy, which needs Node 24.5+.
 node -e '
@@ -27,24 +27,26 @@ node -e '
   process.exit(a !== x ? +(a < x) : b !== y ? +(b < y) : +(c < z));
 ' "$MIN_NODE" || die "Node.js >= $MIN_NODE is required (found $(node -v))."
 
-if [ -d "$DIR/.git" ]; then
-  say "Updating $DIR"
-  git -C "$DIR" fetch --quiet origin "$BRANCH"
-  git -C "$DIR" checkout --quiet "$BRANCH"
-  git -C "$DIR" reset --quiet --hard "origin/$BRANCH"
-elif [ -e "$DIR" ]; then
-  die "$DIR exists and is not a git checkout. Remove it or set CHANGOLOGS_DIR."
+if [ "$VERSION" = latest ]; then
+  URL="https://github.com/$GH_REPO/releases/latest/download/changologs.js"
 else
-  say "Cloning into $DIR"
-  git clone --quiet --depth 1 --branch "$BRANCH" "$REPO" "$DIR"
+  URL="https://github.com/$GH_REPO/releases/download/$VERSION/changologs.js"
 fi
 
-say "Installing dependencies and building"
-(cd "$DIR" && npm ci --ignore-scripts --no-audit --no-fund --loglevel=error && npm run build --silent)
-chmod +x "$DIR/dist/index.js"
+# Earlier versions of this script installed a git checkout here and built it.
+if [ -d "$DIR/.git" ]; then
+  [ "$DIR" = "$HOME/.changologs-cli" ] || die "$DIR is a git checkout. Remove it or set CHANGOLOGS_DIR."
+  say "Removing old source checkout at $DIR"
+  rm -rf "$DIR"
+fi
 
-mkdir -p "$BIN_DIR"
-ln -sf "$DIR/dist/index.js" "$BIN_DIR/changologs"
+mkdir -p "$DIR" "$BIN_DIR"
+say "Downloading changologs ($VERSION)"
+curl -fsSL "$URL" -o "$DIR/changologs.js.tmp" || die "Download failed: $URL"
+mv "$DIR/changologs.js.tmp" "$DIR/changologs.js"
+chmod +x "$DIR/changologs.js"
+
+ln -sf "$DIR/changologs.js" "$BIN_DIR/changologs"
 say "Installed changologs -> $BIN_DIR/changologs"
 
 case ":$PATH:" in
